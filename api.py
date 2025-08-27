@@ -556,7 +556,7 @@ async def send_aidocmaker_request(messages, model_id, functions_list=None, is_st
     log_message(f"Content of formdata {form_data}", "debug", args)
 
     headers = {
-        "User-Agent": "Mozila/5.0 (Linux; Android 14; SM-S928B/DS) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.230 Mobile Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Linux; Android 14; SM-S928B/DS) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.230 Mobile Safari/537.36",
         "Accept": "*/*",
         "Accept-Language": "en-US,fr;q=0.8,fr-FR;q=0.5,en;q=0.3",
         "Accept-Encoding": "gzip, deflate, br, zstd",
@@ -581,6 +581,8 @@ async def send_aidocmaker_request(messages, model_id, functions_list=None, is_st
                     return response_text, None
                 elif response.status == 401:
                     return None, "token_expired"
+                elif response.status == 403:
+                    return None, "token_expired"  # Treat 403 as token expired too
                 else:
                     text = await response.text()
                     log_message(
@@ -655,7 +657,7 @@ def chat_completions():
 
         # Make request to AiDocMaker
         result, error = run_async_in_sync(send_aidocmaker_request(
-            filtered_messages, model_info["model_id"], is_streaming, args))
+            filtered_messages, model_info["model_id"], None, is_streaming, args))
 
         # Handle token expiration
         if error == "token_expired":
@@ -664,7 +666,7 @@ def chat_completions():
             if current_auth_token:
                 token_refreshed = True
                 result, error = run_async_in_sync(send_aidocmaker_request(
-                    filtered_messages, model_info["model_id"], is_streaming, args))
+                    filtered_messages, model_info["model_id"], None, is_streaming, args))
             else:
                 return jsonify({"error": "Failed to refresh auth token"}), 401
 
